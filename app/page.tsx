@@ -8,14 +8,17 @@ import { AnalysisResult } from '@/types';
 export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null); // NEW: Store resume file
 
-  const handleAnalysisComplete = (result: AnalysisResult) => {
+  const handleAnalysisComplete = (result: AnalysisResult, file: File) => {
     setAnalysisResult(result);
+    setResumeFile(file); // NEW: Store the file for annotations
     setIsAnalyzing(false);
   };
 
   const handleReset = () => {
     setAnalysisResult(null);
+    setResumeFile(null); // NEW: Clear the file
     setIsAnalyzing(false);
   };
 
@@ -89,7 +92,12 @@ export default function Home() {
 
         {analysisResult && (
           <div className="animate-scale-in">
-            <ResultsDashboard result={analysisResult} onReset={handleReset} />
+            {/* NEW: Pass resume file */}
+            <ResultsDashboard 
+              result={analysisResult} 
+              onReset={handleReset} 
+              resumeFile={resumeFile || undefined}
+            />
           </div>
         )}
       </div>

@@ -1,14 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import { AnalysisResult } from '@/types';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
+
+// Dynamically import AnnotationOverlay to avoid SSR issues with PDF rendering
+const AnnotationOverlay = dynamic(() => import('./AnnotationOverlay'), {
+  ssr: false,
+});
 
 interface ResultsDashboardProps {
   result: AnalysisResult;
   onReset: () => void;
+  resumeFile?: File; // NEW: Pass the resume file for annotation
 }
 
-export default function ResultsDashboard({ result, onReset }: ResultsDashboardProps) {
+export default function ResultsDashboard({ result, onReset, resumeFile }: ResultsDashboardProps) {
+  const [showAnnotations, setShowAnnotations] = useState(false);
+  
   const getScoreColor = (score: number) => {
     if (score >= 75) return { bg: 'bg-brutal-green', text: 'text-brutal-black', border: 'border-brutal-green' };
     if (score >= 50) return { bg: 'bg-brutal-yellow', text: 'text-brutal-black', border: 'border-brutal-yellow' };
@@ -36,12 +46,23 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
               Here&apos;s your resume analysis
             </p>
           </div>
-          <button
-            onClick={onReset}
-            className="brutal-btn transform rotate-2"
-          >
-            🔄 ANALYZE AGAIN
-          </button>
+          <div className="flex gap-3">
+            {/* NEW: Live Annotation Button */}
+            {result.annotations && result.annotations.length > 0 && resumeFile && (
+              <button
+                onClick={() => setShowAnnotations(true)}
+                className="brutal-btn-pink transform -rotate-2"
+              >
+                📝 VIEW LIVE MARKUP
+              </button>
+            )}
+            <button
+              onClick={onReset}
+              className="brutal-btn transform rotate-2"
+            >
+              🔄 ANALYZE AGAIN
+            </button>
+          </div>
         </div>
       </div>
 
@@ -225,6 +246,18 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
           </ul>
         </div>
       </div>
+
+      {/* NEW: Annotation Overlay Modal */}
+      {showAnnotations && result.annotations && resumeFile && (
+        <AnnotationOverlay
+          annotationData={{
+            resumeUrl: URL.createObjectURL(resumeFile),
+            annotations: result.annotations,
+            pageCount: 1,
+          }}
+          onClose={() => setShowAnnotations(false)}
+        />
+      )}
     </div>
   );
 }

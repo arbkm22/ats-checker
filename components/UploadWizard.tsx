@@ -6,7 +6,7 @@ import { analyzeResume } from '@/lib/api';
 
 interface UploadWizardProps {
   onAnalysisStart: () => void;
-  onAnalysisComplete: (result: AnalysisResult) => void;
+  onAnalysisComplete: (result: AnalysisResult, file: File) => void; // NEW: Include file parameter
 }
 
 export default function UploadWizard({ onAnalysisStart, onAnalysisComplete }: UploadWizardProps) {
@@ -117,7 +117,7 @@ export default function UploadWizard({ onAnalysisStart, onAnalysisComplete }: Up
     
     try {
       const result = await analyzeResume(uploadState.resume!, uploadState.jobDescription);
-      onAnalysisComplete(result);
+      onAnalysisComplete(result, uploadState.resume!); // NEW: Pass the file
     } catch (error) {
       console.error('Analysis failed:', error);
       setUploadState(prev => ({

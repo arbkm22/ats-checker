@@ -1,4 +1,4 @@
-import { AnalysisResult } from '@/types';
+import { AnalysisResult, ResumeAnnotation } from '@/types';
 
 // System prompt for LLM to analyze resume
 export const SYSTEM_PROMPT = `You are an expert ATS (Applicant Tracking System) resume analyzer with deep knowledge of hiring practices, resume optimization, and keyword matching. Your task is to analyze a resume against a job description and provide a comprehensive evaluation.
@@ -128,6 +128,9 @@ function generateMockAnalysis(resumeText: string, jobDescription: string, fileNa
   const criticalGaps = generateGaps(missing);
   const optimizationTips = generateTips(matchScore, missing);
 
+  // NEW: Generate annotations for live resume markup
+  const annotations = generateAnnotations(matched, missing, resumeText);
+
   return {
     matchScore,
     strengths,
@@ -141,6 +144,7 @@ function generateMockAnalysis(resumeText: string, jobDescription: string, fileNa
     experienceRelevance: experienceScore,
     formattingScore,
     impactVerbsScore,
+    annotations, // NEW: Include annotations for overlay
   };
 }
 
@@ -227,4 +231,68 @@ function generateTips(matchScore: number, missing: string[]): string[] {
   tips.push('Tailor your resume summary to match the job description');
   
   return tips.slice(0, 5);
+}
+
+// NEW: Generate mock annotations for live resume markup
+function generateAnnotations(matched: string[], missing: string[], resumeText: string): ResumeAnnotation[] {
+  const annotations: ResumeAnnotation[] = [];
+  
+  // Create positive annotations for matched keywords
+  matched.slice(0, 5).forEach((keyword, index) => {
+    annotations.push({
+      id: `pos-${index}`,
+      text: keyword,
+      sentiment: 'positive',
+      annotationType: index % 2 === 0 ? 'circle' : 'underline',
+      boundingBox: {
+        pageNumber: 1,
+        x: 50 + (index * 150),
+        y: 100 + (index * 80),
+        width: keyword.length * 8,
+        height: 20,
+      },
+      reason: `Great! This keyword matches the job description.`,
+    });
+  });
+
+  // Create negative annotations for missing keywords
+  missing.slice(0, 3).forEach((keyword, index) => {
+    annotations.push({
+      id: `neg-${index}`,
+      text: `Missing: ${keyword}`,
+      sentiment: 'negative',
+      annotationType: 'strikethrough',
+      boundingBox: {
+        pageNumber: 1,
+        x: 50 + (index * 180),
+        y: 300 + (index * 60),
+        width: keyword.length * 10,
+        height: 18,
+      },
+      reason: `Add this skill if you have experience with ${keyword}.`,
+    });
+  });
+
+  // Add some positive highlights for strong verbs
+  const strongVerbs = ['Developed', 'Implemented', 'Led', 'Managed'];
+  strongVerbs.forEach((verb, index) => {
+    if (resumeText.includes(verb)) {
+      annotations.push({
+        id: `verb-${index}`,
+        text: verb,
+        sentiment: 'positive',
+        annotationType: 'highlight',
+        boundingBox: {
+          pageNumber: 1,
+          x: 100 + (index * 120),
+          y: 500 + (index * 50),
+          width: verb.length * 9,
+          height: 22,
+        },
+        reason: `Excellent action verb!`,
+      });
+    }
+  });
+
+  return annotations;
 }
