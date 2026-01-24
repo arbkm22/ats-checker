@@ -37,6 +37,10 @@
     @apply bg-brutal-purple border-4 border-brutal-black shadow-brutal text-white;
   }
 
+  .brutal-card-green {
+    @apply bg-brutal-green border-4 border-brutal-black shadow-brutal;
+  }
+
   /* Brutal button */
   .brutal-btn {
     @apply bg-brutal-yellow border-4 border-brutal-black px-8 py-4;
