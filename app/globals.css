@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brutal-white text-brutal-black antialiased;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Neobrutalism card */
+  .brutal-card {
+    @apply bg-brutal-white border-4 border-brutal-black rounded-none shadow-brutal;
+    @apply transition-all duration-200;
+  }
+
+  .brutal-card:hover {
+    @apply shadow-brutal-hover translate-x-1 translate-y-1;
+  }
+
+  /* Colored brutal cards */
+  .brutal-card-yellow {
+    @apply bg-brutal-yellow border-4 border-brutal-black shadow-brutal;
+  }
+
+  .brutal-card-pink {
+    @apply bg-brutal-pink border-4 border-brutal-black shadow-brutal text-white;
+  }
+
+  .brutal-card-cyan {
+    @apply bg-brutal-cyan border-4 border-brutal-black shadow-brutal;
+  }
+
+  .brutal-card-purple {
+    @apply bg-brutal-purple border-4 border-brutal-black shadow-brutal text-white;
+  }
+
+  /* Brutal button */
+  .brutal-btn {
+    @apply bg-brutal-yellow border-4 border-brutal-black px-8 py-4;
+    @apply font-black uppercase tracking-wider shadow-brutal;
+    @apply hover:shadow-brutal-hover hover:translate-x-1 hover:translate-y-1;
+    @apply active:shadow-none active:translate-x-2 active:translate-y-2;
+    @apply transition-all duration-150;
+  }
+
+  .brutal-btn-pink {
+    @apply bg-brutal-pink text-white border-4 border-brutal-black px-8 py-4;
+    @apply font-black uppercase tracking-wider shadow-brutal-color;
+    @apply hover:shadow-brutal-hover hover:translate-x-1 hover:translate-y-1;
+    @apply active:shadow-none active:translate-x-2 active:translate-y-2;
+    @apply transition-all duration-150;
+  }
+
+  /* Brutal input */
+  .brutal-input {
+    @apply bg-white border-4 border-brutal-black px-4 py-3;
+    @apply font-bold text-brutal-black placeholder-gray-500;
+    @apply focus:outline-none focus:ring-4 focus:ring-brutal-yellow;
+    @apply transition-all duration-200;
+  }
+
+  /* Brutal upload zone */
+  .brutal-upload {
+    @apply border-4 border-dashed border-brutal-black bg-brutal-white;
+    @apply hover:bg-brutal-yellow/20 hover:border-brutal-pink;
+    @apply transition-all duration-200 cursor-pointer;
+  }
+
+  .brutal-upload.active {
+    @apply bg-brutal-cyan/30 border-brutal-cyan;
+  }
+
+  .brutal-upload.success {
+    @apply bg-brutal-green/20 border-brutal-green;
+  }
+
+  .brutal-upload.error {
+    @apply bg-brutal-pink/20 border-brutal-pink;
+  }
+
+  /* Brutal badge */
+  .brutal-badge {
+    @apply inline-block px-4 py-2 border-3 border-brutal-black;
+    @apply font-black uppercase text-sm;
+    @apply transition-transform hover:scale-105;
+  }
+
+  .brutal-badge-green {
+    @apply brutal-badge bg-brutal-green;
+  }
+
+  .brutal-badge-red {
+    @apply brutal-badge bg-brutal-pink text-white;
+  }
+
+  .brutal-badge-yellow {
+    @apply brutal-badge bg-brutal-yellow;
+  }
+
+  /* Decorative elements */
+  .dots-pattern {
+    background-image: radial-gradient(circle, #000 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+  }
+
+  .stripes-pattern {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.05) 10px,
+      rgba(0, 0, 0, 0.05) 20px
+    );
+  }
+}
+
+/* Custom scrollbar - Neobrutalism style */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-brutal-white border-2 border-brutal-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brutal-yellow border-2 border-brutal-black;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-brutal-pink;
+}
+
+/* Selection */
+::selection {
+  @apply bg-brutal-yellow text-brutal-black;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
