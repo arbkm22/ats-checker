@@ -9,7 +9,13 @@ interface ResultsDashboardProps {
 }
 
 export default function ResultsDashboard({ result, onReset }: ResultsDashboardProps) {
-  const getScoreColor = (score: number) => {
+  const getScoreColorClass = (score: number) => {
+    if (score >= 75) return 'text-cyber-green';
+    if (score >= 50) return 'text-cyber-yellow';
+    return 'text-cyber-pink';
+  };
+
+  const getScoreColorName = (score: number) => {
     if (score >= 75) return 'cyber-green';
     if (score >= 50) return 'cyber-yellow';
     return 'cyber-pink';
@@ -66,7 +72,7 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
                 cx="100"
                 cy="100"
                 r="90"
-                stroke={`url(#gradient-${getScoreColor(result.matchScore)})`}
+                stroke={`url(#gradient-${getScoreColorName(result.matchScore)})`}
                 strokeWidth="20"
                 fill="none"
                 strokeDasharray={`${(result.matchScore / 100) * 565.48} 565.48`}
@@ -90,7 +96,7 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
             
             {/* Score text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-6xl font-bold text-${getScoreColor(result.matchScore)}`}>
+              <span className={`text-6xl font-bold ${getScoreColorClass(result.matchScore)}`}>
                 {result.matchScore}
               </span>
               <span className="text-gray-400 text-sm mt-2">Match Score</span>
@@ -99,7 +105,14 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
 
           {/* Score breakdown */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-4">
-            <ScoreCard title="Keywords" score={Math.round((result.keywordMatches.matched.length / (result.keywordMatches.matched.length + result.keywordMatches.missing.length)) * 100)} />
+            <ScoreCard 
+              title="Keywords" 
+              score={
+                result.keywordMatches.matched.length + result.keywordMatches.missing.length > 0
+                  ? Math.round((result.keywordMatches.matched.length / (result.keywordMatches.matched.length + result.keywordMatches.missing.length)) * 100)
+                  : 0
+              } 
+            />
             <ScoreCard title="Formatting" score={result.formattingScore} />
             <ScoreCard title="Impact Verbs" score={result.impactVerbsScore} />
             <ScoreCard title="Experience" score={result.experienceRelevance} />
@@ -246,16 +259,16 @@ export default function ResultsDashboard({ result, onReset }: ResultsDashboardPr
 }
 
 function ScoreCard({ title, score }: { title: string; score: number }) {
-  const getColor = (s: number) => {
-    if (s >= 75) return 'cyber-green';
-    if (s >= 50) return 'cyber-yellow';
-    return 'cyber-pink';
+  const getColorClass = (s: number) => {
+    if (s >= 75) return 'text-cyber-green';
+    if (s >= 50) return 'text-cyber-yellow';
+    return 'text-cyber-pink';
   };
 
   return (
     <div className="glass p-4 rounded-xl">
       <div className="text-sm text-gray-400 mb-2">{title}</div>
-      <div className={`text-2xl font-bold text-${getColor(score)}`}>{score}%</div>
+      <div className={`text-2xl font-bold ${getColorClass(score)}`}>{score}%</div>
     </div>
   );
 }

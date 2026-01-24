@@ -79,9 +79,14 @@ async function extractTextFromFile(file: File): Promise<string> {
     // For LaTeX files, read the raw source
     return await file.text();
   } else if (fileName.endsWith('.pdf')) {
-    // For PDF files, we'd use pdf-parse or similar
-    // For now, return a placeholder
-    return await file.text();
+    // For PDF files, we'd use pdf-parse library in production
+    // For demonstration purposes, using a mock extraction
+    // In production: const pdfParse = await import('pdf-parse');
+    // const data = await pdfParse(await file.arrayBuffer());
+    // return data.text;
+    
+    // Mock extraction for demonstration
+    return `Mock PDF content extracted from ${file.name}. In production, this would use pdf-parse library to extract actual text content from the PDF file while preserving layout and structure.`;
   }
   
   return '';
@@ -197,10 +202,7 @@ function generateGaps(missing: string[]): string[] {
   
   if (missing.length > 0) {
     gaps.push(`Missing ${missing.length} key skills mentioned in job description`);
-    
-    if (missing.length > 0) {
-      gaps.push(`Specifically lacking: ${missing.slice(0, 3).join(', ')}`);
-    }
+    gaps.push(`Specifically lacking: ${missing.slice(0, 3).join(', ')}`);
   }
   
   gaps.push('Could include more specific metrics and outcomes');
