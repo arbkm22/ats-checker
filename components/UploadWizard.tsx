@@ -130,22 +130,22 @@ export default function UploadWizard({ onAnalysisStart, onAnalysisComplete }: Up
   };
 
   const getUploadZoneClass = () => {
-    if (uploadState.errors.resume) return 'upload-zone error';
-    if (uploadState.resume) return 'upload-zone success';
-    if (isDragging) return 'upload-zone active';
-    return 'upload-zone';
+    if (uploadState.errors.resume) return 'brutal-upload error';
+    if (uploadState.resume) return 'brutal-upload success';
+    if (isDragging) return 'brutal-upload active';
+    return 'brutal-upload';
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Resume Upload Section */}
-      <div className="card-elevated p-8 space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-100 mb-2">
-            Upload Your Resume
+      <div className="brutal-card-cyan p-8 space-y-6 transform -rotate-1">
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black uppercase tracking-tight bg-brutal-black text-brutal-yellow px-4 py-2 inline-block transform rotate-1 shadow-brutal">
+            📄 UPLOAD
           </h2>
-          <p className="text-slate-400 text-sm">
-            PDF or LaTeX (.tex) format accepted
+          <p className="text-lg font-bold ml-2">
+            PDF or LaTeX (.tex) files only!
           </p>
         </div>
         
@@ -164,34 +164,34 @@ export default function UploadWizard({ onAnalysisStart, onAnalysisComplete }: Up
             className="hidden"
           />
           
-          <div className="p-12 flex flex-col items-center justify-center space-y-4 cursor-pointer">
+          <div className="p-12 flex flex-col items-center justify-center space-y-6 cursor-pointer">
             {uploadState.resume ? (
               <>
-                <div className="w-16 h-16 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center shadow-refined">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="w-20 h-20 bg-brutal-green border-6 border-brutal-black flex items-center justify-center transform rotate-12 shadow-brutal">
+                  <svg className="w-10 h-10 text-brutal-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-100 font-medium">{uploadState.resume.name}</p>
-                  <p className="text-sm text-slate-400 mt-1">
+                  <p className="text-xl font-black uppercase">{uploadState.resume.name}</p>
+                  <p className="text-sm font-bold mt-2">
                     {(uploadState.resume.size / 1024).toFixed(2)} KB
                   </p>
                 </div>
               </>
             ) : (
               <>
-                <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl flex items-center justify-center">
-                  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <div className="w-20 h-20 bg-brutal-yellow border-6 border-brutal-black flex items-center justify-center transform -rotate-12 shadow-brutal animate-wiggle">
+                  <svg className="w-10 h-10 text-brutal-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-medium text-slate-200">
-                    Drop your resume here
+                  <p className="text-2xl font-black uppercase">
+                    DROP IT HERE!
                   </p>
-                  <p className="text-sm text-slate-400 mt-1">
-                    or click to browse files
+                  <p className="text-sm font-bold mt-2">
+                    or click to browse
                   </p>
                 </div>
               </>
@@ -200,82 +200,80 @@ export default function UploadWizard({ onAnalysisStart, onAnalysisComplete }: Up
         </div>
         
         {uploadState.errors.resume && (
-          <div className="flex items-start gap-3 p-4 bg-error-500/10 border border-error-500/20 rounded-xl">
-            <svg className="w-5 h-5 text-error-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <p className="text-error-400 text-sm">{uploadState.errors.resume}</p>
+          <div className="brutal-card-pink p-4 transform rotate-1">
+            <p className="font-black uppercase text-sm flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {uploadState.errors.resume}
+            </p>
           </div>
         )}
 
-        <div className="p-4 bg-slate-900/50 border border-slate-700/30 rounded-xl space-y-2">
-          <h3 className="text-sm font-medium text-slate-300">File Processing</h3>
-          <ul className="text-xs text-slate-400 space-y-1.5">
-            <li className="flex items-start gap-2">
-              <span className="text-primary-400 mt-0.5">•</span>
-              <span><span className="text-slate-300 font-medium">PDF:</span> Text extraction with layout preservation</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary-400 mt-0.5">•</span>
-              <span><span className="text-slate-300 font-medium">LaTeX:</span> Source code analysis for technical accuracy</span>
-            </li>
+        <div className="bg-brutal-yellow border-4 border-brutal-black p-4 shadow-brutal space-y-2">
+          <h3 className="text-sm font-black uppercase">⚙️ File Processing:</h3>
+          <ul className="text-xs font-bold space-y-1.5">
+            <li>• PDF: Text extraction + layout analysis</li>
+            <li>• LaTeX: Source code parsing for accuracy</li>
           </ul>
         </div>
       </div>
 
       {/* Job Description Section */}
-      <div className="card-elevated p-8 space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-100 mb-2">
-            Job Description
+      <div className="brutal-card-yellow p-8 space-y-6 transform rotate-1">
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black uppercase tracking-tight bg-brutal-black text-brutal-cyan px-4 py-2 inline-block transform -rotate-1 shadow-brutal">
+            💼 JOB
           </h2>
-          <p className="text-slate-400 text-sm">
-            Paste the complete job posting for accurate analysis
+          <p className="text-lg font-bold ml-2">
+            Paste the complete job description!
           </p>
         </div>
         
         <textarea
           value={uploadState.jobDescription}
           onChange={handleJobDescriptionChange}
-          placeholder="Paste the job description here...
+          placeholder="PASTE JOB DESCRIPTION HERE...
 
-Include all relevant details:
-• Required skills and qualifications
-• Responsibilities and duties  
-• Experience requirements
-• Preferred technologies or certifications"
-          className={`w-full h-64 input-refined resize-none ${
-            uploadState.errors.jobDescription ? 'border-error-500 focus:ring-error-500/50' : ''
+Include:
+• Required skills
+• Responsibilities  
+• Experience needed
+• Tech stack"
+          className={`w-full h-64 brutal-input resize-none font-mono ${
+            uploadState.errors.jobDescription ? 'ring-4 ring-brutal-pink' : ''
           }`}
         />
         
         {uploadState.errors.jobDescription && (
-          <div className="flex items-start gap-3 p-4 bg-error-500/10 border border-error-500/20 rounded-xl">
-            <svg className="w-5 h-5 text-error-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <p className="text-error-400 text-sm">{uploadState.errors.jobDescription}</p>
+          <div className="brutal-card-pink p-4 transform -rotate-1">
+            <p className="font-black uppercase text-sm flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {uploadState.errors.jobDescription}
+            </p>
           </div>
         )}
 
         <button
           onClick={handleAnalyze}
           disabled={!uploadState.resume || !uploadState.jobDescription.trim()}
-          className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
+          className={`w-full transform -rotate-1 ${
             uploadState.resume && uploadState.jobDescription.trim()
-              ? 'btn-primary'
-              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              ? 'brutal-btn-pink'
+              : 'bg-gray-300 text-gray-500 border-4 border-gray-400 px-8 py-4 font-black uppercase cursor-not-allowed'
           }`}
         >
           {uploadState.resume && uploadState.jobDescription.trim() ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <span className="flex items-center justify-center text-xl">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Analyze Resume
+              ⚡ ANALYZE NOW!
             </span>
           ) : (
-            'Complete All Fields to Continue'
+            'COMPLETE ALL FIELDS'
           )}
         </button>
       </div>

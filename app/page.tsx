@@ -20,18 +20,30 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen relative">
+    <main className="min-h-screen relative bg-brutal-white overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-brutal-yellow border-4 border-brutal-black rotate-12 animate-float-brutal"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-brutal-pink border-4 border-brutal-black -rotate-12 animate-wiggle"></div>
+        <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-brutal-cyan border-4 border-brutal-black rotate-45 animate-tilt"></div>
+        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-brutal-green border-4 border-brutal-black animate-bounce-slow"></div>
+        <div className="dots-pattern absolute inset-0 opacity-10"></div>
+      </div>
+
       {/* Header */}
-      <header className="relative z-10 py-12 px-4 border-b border-slate-800/50">
+      <header className="relative z-10 py-12 px-4 border-b-6 border-brutal-black bg-gradient-brutal">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-3">
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent">
-                ATS Checker
+          <div className="text-center space-y-4">
+            <h1 className="text-7xl md:text-8xl font-black tracking-tighter transform -rotate-1">
+              <span className="inline-block bg-brutal-white border-6 border-brutal-black px-6 py-2 shadow-brutal-xl animate-wiggle">
+                ATS
+              </span>
+              <span className="inline-block bg-brutal-pink text-white border-6 border-brutal-black px-6 py-2 ml-4 shadow-brutal-xl transform rotate-2">
+                CHECKER
               </span>
             </h1>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              Intelligent resume analysis powered by AI. Get actionable insights to improve your job application success rate.
+            <p className="text-xl md:text-2xl font-bold max-w-3xl mx-auto bg-brutal-yellow border-4 border-brutal-black px-6 py-3 shadow-brutal inline-block transform -rotate-1">
+              🚀 AI-POWERED RESUME ANALYSIS • GET HIRED FASTER
             </p>
           </div>
         </div>
@@ -40,7 +52,7 @@ export default function Home() {
       {/* Main content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
         {!analysisResult && !isAnalyzing && (
-          <div className="animate-fade-in">
+          <div className="animate-scale-in">
             <UploadWizard 
               onAnalysisStart={() => setIsAnalyzing(true)}
               onAnalysisComplete={handleAnalysisComplete}
@@ -49,25 +61,25 @@ export default function Home() {
         )}
         
         {isAnalyzing && (
-          <div className="flex items-center justify-center min-h-[500px] animate-scale-in">
-            <div className="card-elevated p-12 max-w-md w-full">
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="brutal-card-yellow p-12 max-w-md w-full transform -rotate-2 animate-pulse-brutal">
               <div className="flex flex-col items-center space-y-8">
-                {/* Refined loading animation */}
-                <div className="relative w-24 h-24">
-                  <div className="absolute inset-0 rounded-full border-4 border-slate-700/30"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-500 animate-spin"></div>
-                  <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-primary-400 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
+                {/* Creative loading animation */}
+                <div className="relative w-32 h-32">
+                  <div className="absolute inset-0 border-6 border-brutal-black bg-brutal-white animate-spin"></div>
+                  <div className="absolute inset-2 border-6 border-brutal-black bg-brutal-pink animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
+                  <div className="absolute inset-4 border-6 border-brutal-black bg-brutal-cyan animate-spin" style={{ animationDuration: '2s' }}></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full animate-glow"></div>
+                    <div className="w-12 h-12 bg-brutal-yellow border-4 border-brutal-black animate-bounce"></div>
                   </div>
                 </div>
                 
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl font-semibold text-slate-100">
-                    Analyzing Your Resume
+                <div className="text-center space-y-3">
+                  <h3 className="text-3xl font-black uppercase tracking-tight">
+                    ANALYZING
                   </h3>
-                  <p className="text-slate-400">
-                    This may take a few moments...
+                  <p className="text-lg font-bold">
+                    🔥 PROCESSING YOUR RESUME...
                   </p>
                 </div>
               </div>
@@ -76,17 +88,17 @@ export default function Home() {
         )}
 
         {analysisResult && (
-          <div className="animate-fade-in">
+          <div className="animate-scale-in">
             <ResultsDashboard result={analysisResult} onReset={handleReset} />
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 py-8 px-4 mt-24 border-t border-slate-800/50">
+      <footer className="relative z-10 py-8 px-4 mt-24 border-t-6 border-brutal-black bg-brutal-black text-brutal-yellow">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-slate-500 text-sm">
-            © 2024 ATS Checker. Powered by Next.js, TypeScript, and AI.
+          <p className="text-sm font-black uppercase tracking-wider">
+            © 2024 ATS CHECKER • BUILT WITH NEXT.JS & AI • NEOBRUTALISM DESIGN
           </p>
         </div>
       </footer>
