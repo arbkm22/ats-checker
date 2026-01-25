@@ -50,7 +50,12 @@ export default function ResultsDashboard({ result, onReset, resumeFile }: Result
             {/* NEW: Live Annotation Button */}
             {result.annotations && result.annotations.length > 0 && resumeFile && (
               <button
-                onClick={() => setShowAnnotations(true)}
+                onClick={() => {
+                  console.log('[ResultsDashboard] Live Markup button clicked');
+                  console.log('[ResultsDashboard] Resume file:', resumeFile?.name, resumeFile?.type, resumeFile?.size, 'bytes');
+                  console.log('[ResultsDashboard] Annotations count:', result.annotations?.length);
+                  setShowAnnotations(true);
+                }}
                 className="brutal-btn-pink transform -rotate-2"
               >
                 📝 VIEW LIVE MARKUP
@@ -248,16 +253,30 @@ export default function ResultsDashboard({ result, onReset, resumeFile }: Result
       </div>
 
       {/* NEW: Annotation Overlay Modal */}
-      {showAnnotations && result.annotations && resumeFile && (
-        <AnnotationOverlay
-          annotationData={{
-            resumeUrl: URL.createObjectURL(resumeFile),
-            annotations: result.annotations,
-            pageCount: 1,
-          }}
-          onClose={() => setShowAnnotations(false)}
-        />
-      )}
+      {showAnnotations && result.annotations && resumeFile && (() => {
+        const blobUrl = URL.createObjectURL(resumeFile);
+        console.log('[ResultsDashboard] Creating blob URL for PDF:', blobUrl);
+        console.log('[ResultsDashboard] File details:', {
+          name: resumeFile.name,
+          type: resumeFile.type,
+          size: resumeFile.size,
+        });
+        return (
+          <AnnotationOverlay
+            annotationData={{
+              resumeUrl: blobUrl,
+              annotations: result.annotations,
+              pageCount: 1,
+            }}
+            onClose={() => {
+              console.log('[ResultsDashboard] Closing annotation overlay');
+              URL.revokeObjectURL(blobUrl);
+              console.log('[ResultsDashboard] Blob URL revoked');
+              setShowAnnotations(false);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
