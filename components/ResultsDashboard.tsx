@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AnalysisResult } from '@/types';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts';
 import dynamic from 'next/dynamic';
@@ -18,6 +18,31 @@ interface ResultsDashboardProps {
 
 export default function ResultsDashboard({ result, onReset, resumeFile }: ResultsDashboardProps) {
   const [showAnnotations, setShowAnnotations] = useState(false);
+  
+  // Create blob URL only when needed and memoize it to prevent re-creation on every render
+  const resumeBlobUrl = useMemo(() => {
+    if (showAnnotations && resumeFile) {
+      const url = URL.createObjectURL(resumeFile);
+      console.log('[ResultsDashboard] Created blob URL for PDF');
+      console.log('[ResultsDashboard] File details:', {
+        name: resumeFile.name,
+        type: resumeFile.type,
+        size: resumeFile.size,
+      });
+      return url;
+    }
+    return null;
+  }, [showAnnotations, resumeFile]);
+
+  // Cleanup blob URL when component unmounts or when showAnnotations becomes false
+  useEffect(() => {
+    return () => {
+      if (resumeBlobUrl) {
+        console.log('[ResultsDashboard] Cleaning up blob URL');
+        URL.revokeObjectURL(resumeBlobUrl);
+      }
+    };
+  }, [resumeBlobUrl]);
   
   const getScoreColor = (score: number) => {
     if (score >= 75) return { bg: 'bg-brutal-green', text: 'text-brutal-black', border: 'border-brutal-green' };
@@ -50,7 +75,12 @@ export default function ResultsDashboard({ result, onReset, resumeFile }: Result
             {/* NEW: Live Annotation Button */}
             {result.annotations && result.annotations.length > 0 && resumeFile && (
               <button
-                onClick={() => setShowAnnotations(true)}
+                onClick={() => {
+                  console.log('[ResultsDashboard] Live Markup button clicked');
+                  console.log('[ResultsDashboard] Resume file:', resumeFile?.name, resumeFile?.type, resumeFile?.size, 'bytes');
+                  console.log('[ResultsDashboard] Annotations count:', result.annotations?.length);
+                  setShowAnnotations(true);
+                }}
                 className="brutal-btn-pink transform -rotate-2"
               >
                 📝 VIEW LIVE MARKUP
@@ -248,14 +278,17 @@ export default function ResultsDashboard({ result, onReset, resumeFile }: Result
       </div>
 
       {/* NEW: Annotation Overlay Modal */}
-      {showAnnotations && result.annotations && resumeFile && (
+      {showAnnotations && result.annotations && resumeBlobUrl && (
         <AnnotationOverlay
           annotationData={{
-            resumeUrl: URL.createObjectURL(resumeFile),
+            resumeUrl: resumeBlobUrl,
             annotations: result.annotations,
             pageCount: 1,
           }}
-          onClose={() => setShowAnnotations(false)}
+          onClose={() => {
+            console.log('[ResultsDashboard] Closing annotation overlay');
+            setShowAnnotations(false);
+          }}
         />
       )}
     </div>

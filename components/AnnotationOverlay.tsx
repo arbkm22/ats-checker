@@ -20,6 +20,27 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
   const [pageWidth, setPageWidth] = useState<number>(800);
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const [hoveredAnnotation, setHoveredAnnotation] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  // Helper function to get URL type for debugging without exposing full URL
+  const getUrlType = (url: string): string => {
+    if (url.startsWith('blob:')) return 'blob URL';
+    if (url.startsWith('data:')) return 'data URL';
+    if (url.startsWith('http://') || url.startsWith('https://')) return 'remote URL';
+    return 'file path';
+  };
+
+  // Debug log on component mount
+  useEffect(() => {
+    console.log('[AnnotationOverlay] Component mounted');
+    console.log('[AnnotationOverlay] Received annotationData:', {
+      resumeUrlType: getUrlType(annotationData.resumeUrl),
+      annotationsCount: annotationData.annotations.length,
+      pageCount: annotationData.pageCount,
+    });
+    console.log('[AnnotationOverlay] PDF.js version:', pdfjs.version);
+    console.log('[AnnotationOverlay] PDF.js worker source:', pdfjs.GlobalWorkerOptions.workerSrc);
+  }, [annotationData]);
 
   useEffect(() => {
     // Render annotations when page loads
@@ -30,15 +51,34 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
   }, [currentPage, annotationData.annotations]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    console.log('[AnnotationOverlay] PDF document loaded successfully');
+    console.log('[AnnotationOverlay] Number of pages:', numPages);
     setNumPages(numPages);
+    setPdfError(null);
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    console.error('[AnnotationOverlay] PDF document failed to load');
+    console.error('[AnnotationOverlay] Error details:', error);
+    console.error('[AnnotationOverlay] Error message:', error.message);
+    console.error('[AnnotationOverlay] Error stack:', error.stack);
+    console.error('[AnnotationOverlay] Resume URL type that failed:', getUrlType(annotationData.resumeUrl));
+    setPdfError(error.message || 'Failed to load PDF file');
   };
 
   const renderAnnotationsForPage = (pageNumber: number) => {
+    console.log('[AnnotationOverlay] Rendering annotations for page', pageNumber);
     const canvas = canvasRefs.current.get(pageNumber);
-    if (!canvas) return;
+    if (!canvas) {
+      console.warn('[AnnotationOverlay] Canvas not found for page', pageNumber);
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.warn('[AnnotationOverlay] Could not get 2D context for canvas');
+      return;
+    }
 
     // Clear previous annotations
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -50,6 +90,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     const pageAnnotations = annotationData.annotations.filter(
       (ann) => ann.boundingBox?.pageNumber === pageNumber
     );
+    console.log('[AnnotationOverlay] Found', pageAnnotations.length, 'annotations for page', pageNumber);
 
     // Draw each annotation with hand-drawn effect
     pageAnnotations.forEach((annotation, index) => {
@@ -184,27 +225,57 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
 
         {/* PDF Viewer with Annotation Overlay */}
         <div className="brutal-card p-6 relative">
+          {pdfError && (
+            <div className="brutal-card-pink p-4 mb-4">
+              <p className="font-black text-white">⚠️ PDF Error: {pdfError}</p>
+              <p className="text-sm text-white mt-2">Check the browser console for detailed error logs.</p>
+            </div>
+          )}
           <div className="relative inline-block">
             <Document
               file={annotationData.resumeUrl}
               onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={
+                <div className="p-8 text-center">
+                  <p className="font-black">Loading PDF...</p>
+                </div>
+              }
+              error={
+                <div className="p-8 text-center brutal-card-pink">
+                  <p className="font-black text-white">Failed to load PDF file.</p>
+                  <p className="text-sm text-white mt-2">Check console for details.</p>
+                </div>
+              }
               className="border-4 border-brutal-black"
             >
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
                 onLoadSuccess={() => {
+                  console.log('[AnnotationOverlay] Page', currentPage, 'loaded successfully');
                   // Setup canvas for annotations
                   const pageElement = document.querySelector('.react-pdf__Page');
                   if (pageElement) {
                     const rect = pageElement.getBoundingClientRect();
+                    console.log('[AnnotationOverlay] Page element dimensions:', rect.width, 'x', rect.height);
                     const canvas = canvasRefs.current.get(currentPage);
                     if (canvas) {
                       canvas.width = rect.width;
                       canvas.height = rect.height;
+                      console.log('[AnnotationOverlay] Canvas setup complete for page', currentPage);
                     }
                   }
                 }}
+                onLoadError={(error) => {
+                  console.error('[AnnotationOverlay] Page', currentPage, 'failed to load');
+                  console.error('[AnnotationOverlay] Page error:', error);
+                }}
+                loading={
+                  <div className="p-4 text-center">
+                    <p className="font-bold">Loading page {currentPage}...</p>
+                  </div>
+                }
               />
             </Document>
 
