@@ -22,11 +22,19 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
   const [hoveredAnnotation, setHoveredAnnotation] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
+  // Helper function to get URL type for debugging without exposing full URL
+  const getUrlType = (url: string): string => {
+    if (url.startsWith('blob:')) return 'blob URL';
+    if (url.startsWith('data:')) return 'data URL';
+    if (url.startsWith('http://') || url.startsWith('https://')) return 'remote URL';
+    return 'file path';
+  };
+
   // Debug log on component mount
   useEffect(() => {
     console.log('[AnnotationOverlay] Component mounted');
     console.log('[AnnotationOverlay] Received annotationData:', {
-      resumeUrl: annotationData.resumeUrl,
+      resumeUrlType: getUrlType(annotationData.resumeUrl),
       annotationsCount: annotationData.annotations.length,
       pageCount: annotationData.pageCount,
     });
@@ -54,7 +62,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     console.error('[AnnotationOverlay] Error details:', error);
     console.error('[AnnotationOverlay] Error message:', error.message);
     console.error('[AnnotationOverlay] Error stack:', error.stack);
-    console.error('[AnnotationOverlay] Resume URL that failed:', annotationData.resumeUrl);
+    console.error('[AnnotationOverlay] Resume URL type that failed:', getUrlType(annotationData.resumeUrl));
     setPdfError(error.message || 'Failed to load PDF file');
   };
 
