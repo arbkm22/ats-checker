@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import rough from 'roughjs';
 import { motion } from 'framer-motion';
 import { ResumeAnnotation, AnnotationData } from '@/types';
@@ -20,7 +22,9 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
   const [pageWidth, setPageWidth] = useState<number>(
     typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth - 32 : 800
   );
+  const [pageRendered, setPageRendered] = useState<boolean>(false);
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredAnnotation, setHoveredAnnotation] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
@@ -32,7 +36,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     return 'file path';
   };
 
-  // Debug log on component mount
+  // Debug log on component mount and lock body scroll
   useEffect(() => {
     console.log('[AnnotationOverlay] Component mounted');
     console.log('[AnnotationOverlay] Received annotationData:', {
@@ -42,6 +46,16 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     });
     console.log('[AnnotationOverlay] PDF.js version:', pdfjs.version);
     console.log('[AnnotationOverlay] PDF.js worker source:', pdfjs.GlobalWorkerOptions.workerSrc);
+
+    // Lock body scroll when overlay is open to prevent double scrollbars
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      // Restore body scroll when overlay is closed
+      // Use empty string to restore to CSS-defined or default behavior
+      document.body.style.overflow = originalOverflow || '';
+    };
   }, [annotationData]);
 
   // Handle window resize for responsive PDF width
@@ -54,14 +68,6 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    // Render annotations when page loads
-    const timer = setTimeout(() => {
-      renderAnnotationsForPage(currentPage);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [currentPage, annotationData.annotations]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     console.log('[AnnotationOverlay] PDF document loaded successfully');
@@ -79,7 +85,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     setPdfError(error.message || 'Failed to load PDF file');
   };
 
-  const renderAnnotationsForPage = (pageNumber: number) => {
+  const renderAnnotationsForPage = useCallback((pageNumber: number) => {
     console.log('[AnnotationOverlay] Rendering annotations for page', pageNumber);
     const canvas = canvasRefs.current.get(pageNumber);
     if (!canvas) {
@@ -91,6 +97,34 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     if (!ctx) {
       console.warn('[AnnotationOverlay] Could not get 2D context for canvas');
       return;
+    }
+
+    // Get display pixel ratio for high-DPI screens
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Get the page element to match canvas size to actual rendered PDF
+    const pageElement = containerRef.current?.querySelector('.react-pdf__Page');
+    if (pageElement) {
+      const rect = pageElement.getBoundingClientRect();
+      
+      // Set canvas display size (CSS)
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      
+      // Set canvas internal size accounting for device pixel ratio for sharper rendering
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
+      // Scale the context to handle high-DPI displays
+      ctx.scale(dpr, dpr);
+      
+      console.log('[AnnotationOverlay] Canvas setup:', {
+        displayWidth: rect.width,
+        displayHeight: rect.height,
+        bufferWidth: canvas.width,
+        bufferHeight: canvas.height,
+        devicePixelRatio: dpr
+      });
     }
 
     // Clear previous annotations
@@ -117,7 +151,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
         drawAnnotation(rc, annotation, x, y, width, height, color);
       }, index * 200); // Stagger animations
     });
-  };
+  }, [annotationData.annotations]);
 
   const drawAnnotation = (
     rc: any,
@@ -128,11 +162,12 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     height: number,
     color: string
   ) => {
+    // Refined hand-drawn style - cleaner but still organic looking
     const options = {
       stroke: color,
-      strokeWidth: 3,
-      roughness: 2.5, // Hand-drawn messiness
-      bowing: 1.5,
+      strokeWidth: 2.5,
+      roughness: 1.2, // Reduced for cleaner look while keeping hand-drawn feel
+      bowing: 0.8,
       fill: annotation.annotationType === 'highlight' ? color : undefined,
       fillStyle: 'solid' as const,
       fillWeight: annotation.annotationType === 'highlight' ? 0.3 : 1,
@@ -140,49 +175,74 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
 
     switch (annotation.annotationType) {
       case 'circle':
-        // Draw rough circle around text
+        // Draw refined circle around text
         rc.ellipse(
           x + width / 2,
           y + height / 2,
-          width + 10,
-          height + 10,
-          options
+          width + 12,
+          height + 12,
+          {
+            ...options,
+            roughness: 1.0, // Smoother circle
+          }
         );
         break;
 
       case 'underline':
-        // Draw messy underline
-        rc.line(x, y + height + 2, x + width, y + height + 2, {
+        // Draw cleaner underline
+        rc.line(x, y + height + 3, x + width, y + height + 3, {
           ...options,
-          roughness: 3,
+          roughness: 1.5,
+          strokeWidth: 2,
         });
         break;
 
       case 'strikethrough':
-        // Draw aggressive cross-out
+        // Draw cleaner cross-out
         rc.line(x, y + height / 2, x + width, y + height / 2, {
           ...options,
-          strokeWidth: 4,
-          roughness: 3.5,
+          strokeWidth: 3,
+          roughness: 1.8,
         });
-        // Add second line for emphasis
-        rc.line(x, y + height / 2 + 3, x + width, y + height / 2 + 3, {
+        // Add second line for emphasis (slightly offset)
+        rc.line(x, y + height / 2 + 4, x + width, y + height / 2 + 4, {
           ...options,
           strokeWidth: 2,
-          roughness: 4,
+          roughness: 2.0,
         });
         break;
 
       case 'highlight':
-        // Draw rough rectangle highlight
+        // Draw cleaner rectangle highlight
         rc.rectangle(x - 2, y - 2, width + 4, height + 4, {
           ...options,
           fill: color,
-          fillStyle: 'hachure' as const,
-          fillWeight: 0.5,
+          fillStyle: 'solid' as const,
+          fillWeight: 0.3,
+          roughness: 0.8,
         });
         break;
     }
+  };
+
+  // Render annotations when page is fully rendered
+  // Small delay ensures the DOM is fully updated after PDF.js renders the page
+  useEffect(() => {
+    if (!pageRendered) return;
+    
+    const timer = setTimeout(() => {
+      renderAnnotationsForPage(currentPage);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [currentPage, pageRendered, renderAnnotationsForPage]);
+
+  // Handle page navigation
+  const handlePageChange = (delta: number) => {
+    setPageRendered(false);
+    setCurrentPage((p) => {
+      const newPage = p + delta;
+      return Math.max(1, Math.min(numPages, newPage));
+    });
   };
 
   return (
@@ -244,7 +304,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
               <p className="text-sm text-white mt-2">Check the browser console for detailed error logs.</p>
             </div>
           )}
-          <div className="relative inline-block">
+          <div className="relative inline-block" ref={containerRef}>
             <Document
               file={annotationData.resumeUrl}
               onLoadSuccess={onDocumentLoadSuccess}
@@ -265,20 +325,11 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
-                onLoadSuccess={() => {
-                  console.log('[AnnotationOverlay] Page', currentPage, 'loaded successfully');
-                  // Setup canvas for annotations
-                  const pageElement = document.querySelector('.react-pdf__Page');
-                  if (pageElement) {
-                    const rect = pageElement.getBoundingClientRect();
-                    console.log('[AnnotationOverlay] Page element dimensions:', rect.width, 'x', rect.height);
-                    const canvas = canvasRefs.current.get(currentPage);
-                    if (canvas) {
-                      canvas.width = rect.width;
-                      canvas.height = rect.height;
-                      console.log('[AnnotationOverlay] Canvas setup complete for page', currentPage);
-                    }
-                  }
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                onRenderSuccess={() => {
+                  console.log('[AnnotationOverlay] Page', currentPage, 'rendered successfully');
+                  setPageRendered(true);
                 }}
                 onLoadError={(error) => {
                   console.error('[AnnotationOverlay] Page', currentPage, 'failed to load');
@@ -298,7 +349,6 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
                 if (el) canvasRefs.current.set(currentPage, el);
               }}
               className="absolute top-0 left-0 pointer-events-none"
-              style={{ width: '100%', height: '100%' }}
             />
           </div>
 
@@ -306,7 +356,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
           {numPages > 1 && (
             <div className="flex items-center justify-center gap-4 mt-6">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => handlePageChange(-1)}
                 disabled={currentPage <= 1}
                 className="brutal-btn-pink disabled:opacity-50 text-sm md:text-base px-4 md:px-8 py-3 md:py-4"
               >
@@ -316,7 +366,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
                 Page {currentPage} / {numPages}
               </span>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+                onClick={() => handlePageChange(1)}
                 disabled={currentPage >= numPages}
                 className="brutal-btn-pink disabled:opacity-50 text-sm md:text-base px-4 md:px-8 py-3 md:py-4"
               >
