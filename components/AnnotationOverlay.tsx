@@ -17,7 +17,9 @@ interface AnnotationOverlayProps {
 export default function AnnotationOverlay({ annotationData, onClose }: AnnotationOverlayProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageWidth, setPageWidth] = useState<number>(800);
+  const [pageWidth, setPageWidth] = useState<number>(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth - 32 : 800
+  );
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const [hoveredAnnotation, setHoveredAnnotation] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -41,6 +43,17 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     console.log('[AnnotationOverlay] PDF.js version:', pdfjs.version);
     console.log('[AnnotationOverlay] PDF.js worker source:', pdfjs.GlobalWorkerOptions.workerSrc);
   }, [annotationData]);
+
+  // Handle window resize for responsive PDF width
+  useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth < 768 ? window.innerWidth - 32 : 800;
+      setPageWidth(newWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Render annotations when page loads
@@ -177,28 +190,28 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-6xl mx-auto p-8"
+        className="max-w-6xl mx-auto p-4 md:p-8"
       >
         {/* Header */}
-        <div className="brutal-card-yellow p-6 mb-6 flex items-center justify-between transform -rotate-1">
+        <div className="brutal-card-yellow p-4 md:p-6 mb-4 md:mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transform -rotate-1">
           <div>
-            <h2 className="text-4xl font-black uppercase">
+            <h2 className="text-2xl md:text-4xl font-black uppercase">
               📝 LIVE RESUME MARKUP
             </h2>
-            <p className="font-bold mt-2">
+            <p className="font-bold text-sm md:text-base mt-2">
               See your resume through a recruiter&apos;s eyes!
             </p>
           </div>
           <button
             onClick={onClose}
-            className="brutal-btn transform rotate-2"
+            className="brutal-btn transform rotate-2 text-sm md:text-base px-4 md:px-8 py-3 md:py-4"
           >
             ✕ CLOSE
           </button>
         </div>
 
         {/* Legend */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 md:mb-6">
           <div className="brutal-card-green p-4 transform rotate-1">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 border-4 border-brutal-black bg-brutal-green flex items-center justify-center">
@@ -224,7 +237,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
         </div>
 
         {/* PDF Viewer with Annotation Overlay */}
-        <div className="brutal-card p-6 relative">
+        <div className="brutal-card p-4 md:p-6 relative">
           {pdfError && (
             <div className="brutal-card-pink p-4 mb-4">
               <p className="font-black text-white">⚠️ PDF Error: {pdfError}</p>
@@ -295,17 +308,17 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="brutal-btn-pink disabled:opacity-50"
+                className="brutal-btn-pink disabled:opacity-50 text-sm md:text-base px-4 md:px-8 py-3 md:py-4"
               >
                 ← PREV
               </button>
-              <span className="font-black text-xl">
+              <span className="font-black text-base md:text-xl">
                 Page {currentPage} / {numPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
                 disabled={currentPage >= numPages}
-                className="brutal-btn-pink disabled:opacity-50"
+                className="brutal-btn-pink disabled:opacity-50 text-sm md:text-base px-4 md:px-8 py-3 md:py-4"
               >
                 NEXT →
               </button>
@@ -314,8 +327,8 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
         </div>
 
         {/* Annotation Details */}
-        <div className="brutal-card-cyan p-6 mt-6 transform rotate-1">
-          <h3 className="text-2xl font-black uppercase mb-4">
+        <div className="brutal-card-cyan p-4 md:p-6 mt-4 md:mt-6 transform rotate-1">
+          <h3 className="text-xl md:text-2xl font-black uppercase mb-4">
             🎯 MARKED ITEMS ({annotationData.annotations.length})
           </h3>
           <div className="space-y-3">
