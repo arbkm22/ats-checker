@@ -61,35 +61,64 @@ The LLM must return annotation data in this exact structure:
 
 ## Coordinate Mapping Implementation
 
-### Option 1: Using react-pdf Text Layer (Recommended)
+### Current Implementation ✅ (IMPLEMENTED)
 
+The annotation system now uses a dual-approach strategy for accurate positioning:
+
+**1. Text Layer Search (Primary Method)**
 ```typescript
-import { Document, Page } from 'react-pdf';
+// Enable text layer in Page component
+<Page renderTextLayer={true} />
 
-// 1. Render PDF with text layer
-<Document file={pdfUrl}>
-  <Page pageNumber={1} />
-</Document>
+// Search for exact text matches in the text layer
+const textLayer = pageElement.querySelector('.react-pdf__Page__textContent');
+const textSpans = textLayer.querySelectorAll('span');
 
-// 2. Access text layer after render
-const textLayer = document.querySelector('.react-pdf__Page__textContent');
-const textItems = textLayer?.querySelectorAll('span');
-
-// 3. Find matching text and get coordinates
-textItems?.forEach((span) => {
-  if (span.textContent === annotationText) {
-    const rect = span.getBoundingClientRect();
-    return {
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-      height: rect.height
-    };
+for (const span of textSpans) {
+  if (span.textContent.trim() === annotation.text.trim()) {
+    // Found! Get actual position
+    const spanRect = span.getBoundingClientRect();
+    const pageRect = pageElement.getBoundingClientRect();
+    
+    // Use page-relative coordinates (already in rendered space)
+    const x = spanRect.left - pageRect.left;
+    const y = spanRect.top - pageRect.top;
+    const width = spanRect.width;
+    const height = spanRect.height;
   }
-});
+}
 ```
 
-### Option 2: Using PDF.js getTextContent() API
+**2. Coordinate Scaling (Fallback Method)**
+```typescript
+// Capture original PDF dimensions
+const onLoadSuccess = (page) => {
+  setPageDimensions({
+    width: page.originalWidth,
+    height: page.originalHeight
+  });
+};
+
+// Calculate scale factors
+const scaleX = renderedWidth / originalDimensions.width;
+const scaleY = renderedHeight / originalDimensions.height;
+
+// Scale annotation coordinates
+const scaledX = boundingBox.x * scaleX;
+const scaledY = boundingBox.y * scaleY;
+const scaledWidth = boundingBox.width * scaleX;
+const scaledHeight = boundingBox.height * scaleY;
+```
+
+**Benefits:**
+- ✅ Accurate positioning when text is found in PDF
+- ✅ Responsive to different screen sizes
+- ✅ Handles high-DPI displays correctly
+- ✅ Falls back gracefully when text isn't found
+
+### Alternative Option: Using PDF.js getTextContent() API
+
+For future enhancement, you can use PDF.js API directly:
 
 ```typescript
 import * as pdfjsLib from 'pdfjs-dist';
@@ -281,8 +310,9 @@ function generateAnnotations(
 
 ### Frontend Enhancements
 
-- [ ] Real-time coordinate calculation from PDF text layer
-- [ ] Multi-page annotation support
+- [x] Real-time coordinate calculation from PDF text layer (IMPLEMENTED)
+- [x] Coordinate scaling for responsive PDF rendering (IMPLEMENTED)
+- [x] Multi-page annotation support
 - [ ] Zoom and pan functionality
 - [ ] Export annotated PDF feature
 - [ ] Mobile-responsive touch interactions

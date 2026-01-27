@@ -12,6 +12,7 @@ A cutting-edge, AI-powered Applicant Tracking System (ATS) checker that analyzes
 - **Dynamic Matching**: Compare your resume against specific job descriptions
 - **Intelligent Scoring**: Generate match scores (0-100) using a weighted algorithm
 - **Deep Analysis**: Get structured breakdowns of strengths, gaps, and optimization tips
+- **📝 Live Resume Markup**: See your resume annotated with hand-drawn style scribbles showing what recruiters notice (positive highlights in green, issues in red)
 
 ### 🛡️ Technical Constraints
 - **Strict Validation**: Only `.pdf` and `.tex` (LaTeX) files accepted
@@ -83,6 +84,7 @@ Match Score =
 2. **Results Dashboard**: Interactive score display with animations
 3. **Skill Radar**: Multi-dimensional skill visualization
 4. **Keyword Heatmap**: Visual keyword match/miss representation
+5. **Live Annotation Overlay**: PDF viewer with hand-drawn scribbles showing strengths and issues
 
 ## 🧠 LLM Prompt Engineering
 
@@ -96,7 +98,9 @@ See `lib/api.ts` for the full system prompt.
 
 ## 📖 Documentation
 
-For detailed documentation, see [DOCUMENTATION.md](./DOCUMENTATION.md)
+For detailed documentation, see:
+- [DOCUMENTATION.md](./DOCUMENTATION.md) - General documentation
+- [LIVE_ANNOTATION_DOCS.md](./LIVE_ANNOTATION_DOCS.md) - Live Resume Annotation feature
 
 Topics covered:
 - Installation guide
@@ -104,6 +108,7 @@ Topics covered:
 - API integration
 - Custom theme setup
 - Deployment instructions
+- Live annotation system architecture and implementation
 
 ## 🛠️ Development
 
@@ -134,6 +139,7 @@ The app enforces strict file type validation:
 2. **Paste Job Description**: Enter the complete job posting
 3. **Analyze**: Click the gradient button to start analysis
 4. **Review Results**: Explore your match score, radar chart, and recommendations
+5. **View Live Markup**: Click "📝 VIEW LIVE MARKUP" to see your resume with hand-drawn annotations showing what recruiters notice
 
 ## 🎯 Deliverables Implemented
 
