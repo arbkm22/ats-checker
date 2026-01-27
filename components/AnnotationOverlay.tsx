@@ -171,12 +171,15 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
       // Try to find the actual text position in the text layer
       if (textLayer && annotation.text) {
         const textSpans = textLayer.querySelectorAll('span');
+        const searchText = annotation.text.trim();
+        
         for (const span of Array.from(textSpans)) {
-          const spanText = span.textContent?.trim().toLowerCase() || '';
-          const searchText = annotation.text.trim().toLowerCase();
+          const spanText = span.textContent?.trim() || '';
           
-          if (spanText.includes(searchText) || searchText.includes(spanText)) {
-            // Found matching text! Use its actual position
+          // Use exact match or check if the span text is exactly the search text
+          // This prevents partial matches like 'and' matching 'Android'
+          if (spanText === searchText) {
+            // Found exact matching text! Use its actual position
             const spanRect = span.getBoundingClientRect();
             const pageRect = pageElement.getBoundingClientRect();
             
@@ -187,7 +190,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
             height = spanRect.height;
             useDirectCoords = true;
             
-            console.log('[AnnotationOverlay] Found text in PDF text layer:', {
+            console.log('[AnnotationOverlay] Found exact text match in PDF text layer:', {
               text: annotation.text,
               position: { x, y, width, height }
             });
