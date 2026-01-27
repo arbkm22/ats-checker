@@ -158,28 +158,73 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     );
     console.log('[AnnotationOverlay] Found', pageAnnotations.length, 'annotations for page', pageNumber);
 
+    // Try to find text positions in the text layer for more accurate positioning
+    const textLayer = pageElement.querySelector('.react-pdf__Page__textContent');
+    
     // Draw each annotation with hand-drawn effect
     pageAnnotations.forEach((annotation, index) => {
       if (!annotation.boundingBox) return;
 
-      const { x, y, width, height } = annotation.boundingBox;
+      let { x, y, width, height } = annotation.boundingBox;
+      let useDirectCoords = false; // Track if we found text in text layer
       
-      // Scale coordinates from PDF space to rendered canvas space
-      const scaledX = x * scaleX;
-      const scaledY = y * scaleY;
-      const scaledWidth = width * scaleX;
-      const scaledHeight = height * scaleY;
+      // Try to find the actual text position in the text layer
+      if (textLayer && annotation.text) {
+        const textSpans = textLayer.querySelectorAll('span');
+        for (const span of Array.from(textSpans)) {
+          const spanText = span.textContent?.trim().toLowerCase() || '';
+          const searchText = annotation.text.trim().toLowerCase();
+          
+          if (spanText.includes(searchText) || searchText.includes(spanText)) {
+            // Found matching text! Use its actual position
+            const spanRect = span.getBoundingClientRect();
+            const pageRect = pageElement.getBoundingClientRect();
+            
+            // Convert to page-relative coordinates (already in rendered space)
+            x = spanRect.left - pageRect.left;
+            y = spanRect.top - pageRect.top;
+            width = spanRect.width;
+            height = spanRect.height;
+            useDirectCoords = true;
+            
+            console.log('[AnnotationOverlay] Found text in PDF text layer:', {
+              text: annotation.text,
+              position: { x, y, width, height }
+            });
+            break;
+          }
+        }
+      }
+      
+      // Determine final coordinates to use
+      let finalX, finalY, finalWidth, finalHeight;
+      
+      if (useDirectCoords) {
+        // Text found in text layer - coordinates are already in rendered space
+        finalX = x;
+        finalY = y;
+        finalWidth = width;
+        finalHeight = height;
+      } else {
+        // No text found - scale coordinates from PDF space to rendered canvas space
+        finalX = x * scaleX;
+        finalY = y * scaleY;
+        finalWidth = width * scaleX;
+        finalHeight = height * scaleY;
+      }
       
       const color = annotation.sentiment === 'positive' ? '#00FF00' : '#DC143C'; // Neon Green or Crimson Red
       
       console.log('[AnnotationOverlay] Drawing annotation:', {
+        text: annotation.text,
         original: { x, y, width, height },
-        scaled: { x: scaledX, y: scaledY, width: scaledWidth, height: scaledHeight }
+        final: { x: finalX, y: finalY, width: finalWidth, height: finalHeight },
+        foundInTextLayer: useDirectCoords
       });
       
       // Animate drawing with delay
       setTimeout(() => {
-        drawAnnotation(rc, annotation, scaledX, scaledY, scaledWidth, scaledHeight, color);
+        drawAnnotation(rc, annotation, finalX, finalY, finalWidth, finalHeight, color);
       }, index * 200); // Stagger animations
     });
   }, [annotationData.annotations, pageDimensions]);
@@ -356,7 +401,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
               <Page
                 pageNumber={currentPage}
                 width={pageWidth}
-                renderTextLayer={false}
+                renderTextLayer={true}
                 renderAnnotationLayer={false}
                 onLoadSuccess={(page) => {
                   console.log('[AnnotationOverlay] Page', currentPage, 'loaded successfully');
