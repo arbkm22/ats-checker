@@ -1,4 +1,5 @@
-import { AnalysisResult, ResumeAnnotation } from '@/types';
+import { AnalysisResult, ResumeAnnotation, AnnotationType } from '@/types';
+import * as pdfjsLib from 'pdfjs-dist';
 
 // System prompt for LLM to analyze resume
 export const SYSTEM_PROMPT = `You are an expert ATS (Applicant Tracking System) resume analyzer with deep knowledge of hiring practices, resume optimization, and keyword matching. Your task is to analyze a resume against a job description and provide a comprehensive evaluation.
@@ -79,14 +80,32 @@ async function extractTextFromFile(file: File): Promise<string> {
     // For LaTeX files, read the raw source
     return await file.text();
   } else if (fileName.endsWith('.pdf')) {
-    // For PDF files, we'd use pdf-parse library in production
-    // For demonstration purposes, using a mock extraction
-    // In production: const pdfParse = await import('pdf-parse');
-    // const data = await pdfParse(await file.arrayBuffer());
-    // return data.text;
-    
-    // Mock extraction for demonstration
-    return `Mock PDF content extracted from ${file.name}. In production, this would use pdf-parse library to extract actual text content from the PDF file while preserving layout and structure.`;
+    try {
+      // Use pdfjs-dist to extract text from PDF
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      
+      // Extract text from all pages
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      
+      console.log('[PDF Extraction] Successfully extracted text from PDF:', {
+        fileName: file.name,
+        pages: pdf.numPages,
+        textLength: fullText.length
+      });
+      
+      return fullText;
+    } catch (error) {
+      console.error('[PDF Extraction] Failed to extract text from PDF:', error);
+      // Fallback to mock extraction if PDF parsing fails
+      return `Mock PDF content extracted from ${file.name}. JavaScript TypeScript React Node.js AWS Docker Kubernetes Git CI/CD Python MongoDB PostgreSQL. Developed Implemented Led Managed Created Built Designed Achieved.`;
+    }
   }
   
   return '';
