@@ -204,8 +204,9 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
           for (const span of Array.from(textSpans)) {
             const spanText = (span.textContent?.trim() || '').toLowerCase();
             
-            // Check if span contains the search text (for longer keywords)
-            if (spanText.includes(searchText) || searchText.includes(spanText)) {
+            // Check if the span contains the search text
+            // Only check spanText.includes(searchText) to ensure we find the annotation text in the PDF
+            if (spanText.includes(searchText)) {
               const spanRect = span.getBoundingClientRect();
               const pageRect = pageElement.getBoundingClientRect();
               
@@ -315,13 +316,15 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
 
       case 'highlight':
         // Draw clean rectangle highlight with subtle fill
+        // No stroke for highlights - just a subtle fill color
         rc.rectangle(x - 2, y - 2, width + 4, height + 4, {
-          ...options,
+          stroke: color,
+          strokeWidth: 0, // Override to 0 - highlights should only show fill, no border
+          roughness: 0.6,
+          bowing: 0.5,
           fill: color,
           fillStyle: 'solid' as const,
           fillWeight: 0.15,
-          roughness: 0.6,
-          strokeWidth: 0, // No stroke for highlights, just fill
         });
         break;
     }

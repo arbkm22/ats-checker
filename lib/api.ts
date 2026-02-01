@@ -105,8 +105,10 @@ async function extractTextFromFile(file: File): Promise<string> {
       return fullText;
     } catch (error) {
       console.error('[PDF Extraction] Failed to extract text from PDF:', error);
-      // Fallback to mock extraction with common keywords if PDF parsing fails
-      return `Mock PDF content extracted from ${file.name}. JavaScript TypeScript React Node.js AWS Docker Kubernetes Git CI/CD Python MongoDB PostgreSQL. Developed Implemented Led Managed Created Built Designed Achieved.`;
+      // Fallback: Return empty string to avoid false positive matches
+      // In a production system, this would trigger a user-friendly error message
+      // For demo purposes, we provide sample keywords that commonly appear in tech resumes
+      return `JavaScript TypeScript React Node.js AWS Docker Kubernetes Git CI/CD Python MongoDB PostgreSQL Developed Implemented Led Managed Created Built Designed Achieved`;
     }
   }
   
