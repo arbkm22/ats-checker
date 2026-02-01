@@ -220,12 +220,12 @@ function generateMockAnalysis(resumeText: string, jobDescription: string, fileNa
 
   // Final weighted match score with role alignment as a strong factor
   const matchScore = Math.round(
-    keywordScore * 0.25 +           // Reduced from 0.30
-    formattingScore * 0.15 +        // Reduced from 0.20
-    impactVerbsScore * 0.15 +       // Reduced from 0.25
-    experienceScore * 0.20 +        // Reduced from 0.25
-    roleAlignmentScore * 0.15 +     // NEW: Role fit importance
-    ecosystemScore * 0.10           // NEW: Tech ecosystem bonus
+    keywordScore * 0.25 +           // Keyword matching
+    formattingScore * 0.15 +        // Formatting quality
+    impactVerbsScore * 0.15 +       // Impact verbs
+    experienceScore * 0.20 +        // Experience relevance
+    roleAlignmentScore * 0.15 +     // Role fit importance
+    ecosystemScore * 0.10           // Tech ecosystem bonus
   );
 
   // Generate skills analysis with semantic scoring
@@ -489,7 +489,7 @@ function calculateExperienceScore(requiredYears: number, candidateYears: number)
   } else {
     // Below requirement - penalize proportionally
     const ratio = candidateYears / requiredYears;
-    return Math.round(ratio * 80); // Max 80 if exactly meeting, scales down
+    return Math.round(ratio * 80); // Scales down from 80 based on how far below requirement
   }
 }
 
@@ -523,9 +523,7 @@ function calculateRoleAlignment(
   // Strong mismatch penalty (e.g., frontend candidate for data role)
   const incompatiblePairs = [
     ['frontend', 'data'],
-    ['data', 'frontend'],
-    ['backend', 'frontend'],
-    ['frontend', 'backend']
+    ['backend', 'frontend']
   ];
   
   const isIncompatible = incompatiblePairs.some(
@@ -593,14 +591,16 @@ function generateSkillsAnalysis(
 ): { skill: string; score: number }[] {
   const skills: { skill: string; score: number }[] = [];
   
-  // Add direct matches with high scores
-  matched.slice(0, 4).forEach(skill => {
-    skills.push({ skill, score: Math.round(85 + Math.random() * 15) });
+  // Add direct matches with high scores (90-100 range)
+  matched.slice(0, 4).forEach((skill, index) => {
+    // Deterministic scoring: slight variation based on position
+    skills.push({ skill, score: 100 - index * 3 });
   });
   
-  // Add transferable skills with moderate scores
-  transferable.slice(0, 3).forEach(skill => {
-    skills.push({ skill, score: Math.round(65 + Math.random() * 20) });
+  // Add transferable skills with moderate scores (70-85 range)
+  transferable.slice(0, 3).forEach((skill, index) => {
+    // Deterministic scoring: lower than direct matches
+    skills.push({ skill, score: 85 - index * 5 });
   });
   
   // Ensure at least 5 skills
@@ -609,7 +609,8 @@ function generateSkillsAnalysis(
       s => !skills.some(sk => sk.skill === s)
     );
     if (remaining.length > 0) {
-      skills.push({ skill: remaining[0], score: Math.round(60 + Math.random() * 25) });
+      // Additional skills get moderate scores
+      skills.push({ skill: remaining[0], score: 70 - (skills.length - 7) * 5 });
     } else {
       break;
     }
