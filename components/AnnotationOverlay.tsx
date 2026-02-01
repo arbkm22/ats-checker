@@ -9,7 +9,8 @@ import { motion } from 'framer-motion';
 import { ResumeAnnotation, AnnotationData } from '@/types';
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Use local worker file served from the same domain to avoid CDN blocking
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 interface AnnotationOverlayProps {
   annotationData: AnnotationData;
@@ -171,12 +172,12 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
       // Try to find the actual text position in the text layer
       if (textLayer && annotation.text) {
         const textSpans = textLayer.querySelectorAll('span');
-        const searchText = annotation.text.trim();
+        const searchText = annotation.text.trim().toLowerCase();
         
         for (const span of Array.from(textSpans)) {
-          const spanText = span.textContent?.trim() || '';
+          const spanText = (span.textContent?.trim() || '').toLowerCase();
           
-          // Use exact match or check if the span text is exactly the search text
+          // Use case-insensitive exact match
           // This prevents partial matches like 'and' matching 'Android'
           if (spanText === searchText) {
             // Found exact matching text! Use its actual position
@@ -195,6 +196,34 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
               position: { x, y, width, height }
             });
             break;
+          }
+        }
+        
+        // If no exact match found, try to find text that contains the search term
+        // This helps match longer phrases or compound words
+        if (!useDirectCoords && searchText.length > 3) {
+          for (const span of Array.from(textSpans)) {
+            const spanText = (span.textContent?.trim() || '').toLowerCase();
+            
+            // Check if the span contains the search text
+            // Only check spanText.includes(searchText) to ensure we find the annotation text in the PDF
+            if (spanText.includes(searchText)) {
+              const spanRect = span.getBoundingClientRect();
+              const pageRect = pageElement.getBoundingClientRect();
+              
+              x = spanRect.left - pageRect.left;
+              y = spanRect.top - pageRect.top;
+              width = spanRect.width;
+              height = spanRect.height;
+              useDirectCoords = true;
+              
+              console.log('[AnnotationOverlay] Found partial text match in PDF text layer:', {
+                text: annotation.text,
+                spanText: span.textContent,
+                position: { x, y, width, height }
+              });
+              break;
+            }
           }
         }
       }
@@ -216,7 +245,7 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
         finalHeight = height * scaleY;
       }
       
-      const color = annotation.sentiment === 'positive' ? '#00FF00' : '#DC143C'; // Neon Green or Crimson Red
+      const color = annotation.sentiment === 'positive' ? '#39FF14' : '#DC143C'; // Neon Green or Crimson Red
       
       console.log('[AnnotationOverlay] Drawing annotation:', {
         text: annotation.text,
@@ -241,20 +270,20 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
     height: number,
     color: string
   ) => {
-    // Refined hand-drawn style - cleaner but still organic looking
+    // Cleaner hand-drawn style - more intentional, less messy
     const options = {
       stroke: color,
-      strokeWidth: 2.5,
-      roughness: 1.2, // Reduced for cleaner look while keeping hand-drawn feel
-      bowing: 0.8,
+      strokeWidth: 2,
+      roughness: 0.8, // Reduced for cleaner, more intentional look
+      bowing: 0.5,    // Reduced bowing for smoother curves
       fill: annotation.annotationType === 'highlight' ? color : undefined,
       fillStyle: 'solid' as const,
-      fillWeight: annotation.annotationType === 'highlight' ? 0.3 : 1,
+      fillWeight: annotation.annotationType === 'highlight' ? 0.2 : 1,
     };
 
     switch (annotation.annotationType) {
       case 'circle':
-        // Draw refined circle around text
+        // Draw clean circle around text
         rc.ellipse(
           x + width / 2,
           y + height / 2,
@@ -262,43 +291,41 @@ export default function AnnotationOverlay({ annotationData, onClose }: Annotatio
           height + 12,
           {
             ...options,
-            roughness: 1.0, // Smoother circle
+            roughness: 0.7, // Smoother circle
+            strokeWidth: 2.5,
           }
         );
         break;
 
       case 'underline':
-        // Draw cleaner underline
+        // Draw clean underline
         rc.line(x, y + height + 3, x + width, y + height + 3, {
           ...options,
-          roughness: 1.5,
-          strokeWidth: 2,
+          roughness: 0.9,
+          strokeWidth: 2.5,
         });
         break;
 
       case 'strikethrough':
-        // Draw cleaner cross-out
+        // Draw clean cross-out
         rc.line(x, y + height / 2, x + width, y + height / 2, {
           ...options,
-          strokeWidth: 3,
-          roughness: 1.8,
-        });
-        // Add second line for emphasis (slightly offset)
-        rc.line(x, y + height / 2 + 4, x + width, y + height / 2 + 4, {
-          ...options,
-          strokeWidth: 2,
-          roughness: 2.0,
+          strokeWidth: 2.5,
+          roughness: 1.0,
         });
         break;
 
       case 'highlight':
-        // Draw cleaner rectangle highlight
+        // Draw clean rectangle highlight with subtle fill
+        // No stroke for highlights - just a subtle fill color
         rc.rectangle(x - 2, y - 2, width + 4, height + 4, {
-          ...options,
+          stroke: color,
+          strokeWidth: 0, // Override to 0 - highlights should only show fill, no border
+          roughness: 0.6,
+          bowing: 0.5,
           fill: color,
           fillStyle: 'solid' as const,
-          fillWeight: 0.3,
-          roughness: 0.8,
+          fillWeight: 0.15,
         });
         break;
     }
