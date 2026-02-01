@@ -9,7 +9,8 @@ import { motion } from 'framer-motion';
 import { ResumeAnnotation, AnnotationData } from '@/types';
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Use local worker file served from the same domain to avoid CDN blocking
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 interface AnnotationOverlayProps {
   annotationData: AnnotationData;
