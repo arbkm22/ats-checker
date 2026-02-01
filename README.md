@@ -35,11 +35,31 @@ cd ats-checker
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and add your Google Gemini API key
+
 # Run development server
 npm run dev
 
 # Open http://localhost:3000
 ```
+
+## 🔑 API Configuration
+
+### Google Gemini AI (Recommended)
+1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add to `.env.local`:
+   ```
+   GOOGLE_GEMINI_API_KEY=your_api_key_here
+   ```
+
+### Fallback Algorithm
+If no API key is configured, the app uses an intelligent local scoring algorithm with:
+- Semantic skill matching
+- Role alignment analysis
+- Transferable skills detection
+- Technology ecosystem overlap
 
 ## 📦 System Architecture
 
@@ -48,7 +68,7 @@ npm run dev
 - **Styling**: Tailwind CSS with custom cyberpunk theme
 - **Animations**: Framer Motion
 - **Charts**: Recharts for radar charts and visualizations
-- **AI Processing**: OpenAI API integration (configurable)
+- **AI Processing**: Google Gemini AI (with fallback to local algorithm)
 
 ### Project Structure
 ```
@@ -62,13 +82,30 @@ ats-checker/
 
 ## 📊 Scoring Algorithm
 
+### AI-Powered Analysis (When API Key Configured)
+Uses **Google Gemini AI** for intelligent resume evaluation:
+- Deep semantic understanding of skills and experience
+- Context-aware relevance scoring
+- Nuanced assessment of transferable skills
+- Industry and role-specific insights
+
+### Fallback Algorithm (When No API Key)
+Smart local algorithm with:
 ```
 Match Score = 
-  (Keyword Matching × 30%) +
-  (Formatting Quality × 20%) +
-  (Impact Verbs × 25%) +
-  (Experience Relevance × 25%)
+  (Keyword Matching × 25%) +
+  (Formatting Quality × 15%) +
+  (Impact Verbs × 15%) +
+  (Experience Relevance × 20%) +
+  (Role Alignment × 15%) +
+  (Ecosystem Overlap × 10%)
 ```
+
+Features:
+- Semantic skill matching (e.g., Apex ↔ Java)
+- Role type detection (Backend, Frontend, Data, etc.)
+- Transferable skills recognition
+- Technology ecosystem analysis
 
 ## 🎨 Design System
 
