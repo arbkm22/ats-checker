@@ -1,9 +1,11 @@
 import { AnalysisResult, ResumeAnnotation, AnnotationType } from '@/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize Google Gemini AI
+const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 // System prompt for LLM to analyze resume
-// NOTE: The current implementation uses an enhanced local scoring algorithm
-// that performs semantic skill matching, role alignment analysis, and
-// transferable skills detection. This prompt is maintained for future LLM integration.
 export const SYSTEM_PROMPT = `You are an expert ATS (Applicant Tracking System) resume analyzer with deep knowledge of hiring practices, resume optimization, and keyword matching. Your task is to analyze a resume against a job description and provide a comprehensive evaluation.
 
 ANALYSIS CRITERIA:
@@ -72,17 +74,102 @@ Return a JSON object with the following structure:
 
 Be specific, constructive, and actionable in your feedback. Focus on what will most impact ATS parsing and human review.`;
 
-// Mock analysis function - In production, this would call an LLM API
+// Main analysis function - Uses Google Gemini AI when API key is available
 export async function analyzeResume(resumeFile: File, jobDescription: string): Promise<AnalysisResult> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
   // Extract text from resume file
   const resumeText = await extractTextFromFile(resumeFile);
 
-  // In production, this would call OpenAI or another LLM
-  // For now, we'll return a mock analysis based on basic heuristics
+  // Try to use Gemini AI if API key is available
+  if (genAI) {
+    try {
+      console.log('[Gemini AI] Using Google Gemini for resume analysis');
+      return await analyzeWithGemini(resumeText, jobDescription, resumeFile.name);
+    } catch (error) {
+      console.error('[Gemini AI] Failed to analyze with Gemini, falling back to local algorithm:', error);
+      // Fallback to local algorithm if Gemini fails
+    }
+  } else {
+    console.log('[Analysis] No Gemini API key found, using local algorithm');
+  }
+
+  // Fallback: Use local semantic matching algorithm
   return generateMockAnalysis(resumeText, jobDescription, resumeFile.name);
+}
+
+/**
+ * Analyzes resume using Google Gemini AI
+ */
+async function analyzeWithGemini(
+  resumeText: string,
+  jobDescription: string,
+  fileName: string
+): Promise<AnalysisResult> {
+  if (!genAI) {
+    throw new Error('Gemini AI not initialized');
+  }
+
+  // Use Gemini 1.5 Flash for fast, cost-effective analysis
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  // Construct the analysis prompt
+  const prompt = `${SYSTEM_PROMPT}
+
+RESUME CONTENT:
+${resumeText}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+FILE TYPE: ${fileName.endsWith('.tex') ? 'LaTeX (.tex)' : 'PDF'}
+
+Analyze this resume against the job description and return ONLY a valid JSON object with the exact structure specified in the system prompt. Do not include any markdown formatting, explanations, or additional text - just the raw JSON.`;
+
+  // Call Gemini API
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
+
+  console.log('[Gemini AI] Received response from Gemini:', {
+    length: text.length,
+    preview: text.substring(0, 100)
+  });
+
+  // Parse the JSON response
+  let analysisData;
+  try {
+    // Try to extract JSON from the response (in case it's wrapped in markdown)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      analysisData = JSON.parse(jsonMatch[0]);
+    } else {
+      analysisData = JSON.parse(text);
+    }
+  } catch (parseError) {
+    console.error('[Gemini AI] Failed to parse JSON response:', parseError);
+    console.error('[Gemini AI] Raw response:', text);
+    throw new Error('Failed to parse Gemini AI response as JSON');
+  }
+
+  // Generate annotations for live resume markup
+  const annotations = generateAnnotations(
+    analysisData.keywordMatches?.matched || [],
+    analysisData.keywordMatches?.missing || [],
+    resumeText
+  );
+
+  // Return the analysis result with annotations
+  return {
+    matchScore: analysisData.matchScore || 0,
+    strengths: analysisData.strengths || [],
+    criticalGaps: analysisData.criticalGaps || [],
+    optimizationTips: analysisData.optimizationTips || [],
+    keywordMatches: analysisData.keywordMatches || { matched: [], missing: [] },
+    skillsAnalysis: analysisData.skillsAnalysis || [],
+    experienceRelevance: analysisData.experienceRelevance || 0,
+    formattingScore: analysisData.formattingScore || 0,
+    impactVerbsScore: analysisData.impactVerbsScore || 0,
+    annotations,
+  };
 }
 
 async function extractTextFromFile(file: File): Promise<string> {
@@ -130,12 +217,17 @@ async function extractTextFromFile(file: File): Promise<string> {
 
 /**
  * =============================================================================
- * IMPROVED CV-JD SCORING ALGORITHM
+ * FALLBACK: LOCAL SCORING ALGORITHM
  * =============================================================================
  * 
- * This implementation replaces simple keyword matching with a comprehensive
- * relevance-based scoring system that evaluates candidate fit across multiple
- * dimensions.
+ * This implementation serves as a fallback when Gemini AI is unavailable.
+ * It uses a comprehensive relevance-based scoring system that evaluates 
+ * candidate fit across multiple dimensions.
+ * 
+ * Used when:
+ * - No GOOGLE_GEMINI_API_KEY is configured
+ * - Gemini API call fails or times out
+ * - Network connectivity issues
  * 
  * KEY IMPROVEMENTS:
  * 
