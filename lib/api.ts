@@ -2,7 +2,8 @@ import { AnalysisResult, ResumeAnnotation, AnnotationType } from '@/types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Google Gemini AI
-const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+// Note: API key must be server-side only (no NEXT_PUBLIC_ prefix)
+const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY || '';
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 // System prompt for LLM to analyze resume
@@ -137,17 +138,51 @@ Analyze this resume against the job description and return ONLY a valid JSON obj
   // Parse the JSON response
   let analysisData;
   try {
-    // Try to extract JSON from the response (in case it's wrapped in markdown)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      analysisData = JSON.parse(jsonMatch[0]);
+    // First, try to parse as direct JSON
+    analysisData = JSON.parse(text);
+  } catch (directParseError) {
+    // If that fails, try to extract JSON from markdown code blocks
+    const markdownMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+    if (markdownMatch) {
+      try {
+        analysisData = JSON.parse(markdownMatch[1]);
+      } catch (markdownParseError) {
+        console.error('[Gemini AI] Failed to parse markdown-wrapped JSON:', markdownParseError);
+        throw new Error('Failed to parse Gemini AI response as JSON');
+      }
     } else {
-      analysisData = JSON.parse(text);
+      // Last resort: try to find the first complete JSON object using brace counting
+      let braceCount = 0;
+      let startIndex = -1;
+      let endIndex = -1;
+      
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === '{') {
+          if (braceCount === 0) startIndex = i;
+          braceCount++;
+        } else if (text[i] === '}') {
+          braceCount--;
+          if (braceCount === 0 && startIndex !== -1) {
+            endIndex = i;
+            break;
+          }
+        }
+      }
+      
+      if (startIndex !== -1 && endIndex !== -1) {
+        try {
+          analysisData = JSON.parse(text.substring(startIndex, endIndex + 1));
+        } catch (extractError) {
+          console.error('[Gemini AI] Failed to parse extracted JSON:', extractError);
+          console.error('[Gemini AI] Raw response:', text);
+          throw new Error('Failed to parse Gemini AI response as JSON');
+        }
+      } else {
+        console.error('[Gemini AI] Could not find valid JSON in response');
+        console.error('[Gemini AI] Raw response:', text);
+        throw new Error('Failed to parse Gemini AI response as JSON');
+      }
     }
-  } catch (parseError) {
-    console.error('[Gemini AI] Failed to parse JSON response:', parseError);
-    console.error('[Gemini AI] Raw response:', text);
-    throw new Error('Failed to parse Gemini AI response as JSON');
   }
 
   // Generate annotations for live resume markup
