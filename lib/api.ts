@@ -1,5 +1,4 @@
 import { AnalysisResult, ResumeAnnotation, AnnotationType } from '@/types';
-import * as pdfjsLib from 'pdfjs-dist';
 
 // System prompt for LLM to analyze resume
 export const SYSTEM_PROMPT = `You are an expert ATS (Applicant Tracking System) resume analyzer with deep knowledge of hiring practices, resume optimization, and keyword matching. Your task is to analyze a resume against a job description and provide a comprehensive evaluation.
@@ -81,6 +80,9 @@ async function extractTextFromFile(file: File): Promise<string> {
     return await file.text();
   } else if (fileName.endsWith('.pdf')) {
     try {
+      // Dynamically import pdfjs-dist to avoid SSR issues
+      const pdfjsLib = await import('pdfjs-dist');
+      
       // Use pdfjs-dist to extract text from PDF
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -103,7 +105,7 @@ async function extractTextFromFile(file: File): Promise<string> {
       return fullText;
     } catch (error) {
       console.error('[PDF Extraction] Failed to extract text from PDF:', error);
-      // Fallback to mock extraction if PDF parsing fails
+      // Fallback to mock extraction with common keywords if PDF parsing fails
       return `Mock PDF content extracted from ${file.name}. JavaScript TypeScript React Node.js AWS Docker Kubernetes Git CI/CD Python MongoDB PostgreSQL. Developed Implemented Led Managed Created Built Designed Achieved.`;
     }
   }
