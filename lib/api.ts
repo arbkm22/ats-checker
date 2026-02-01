@@ -238,58 +238,50 @@ function generateAnnotations(matched: string[], missing: string[], resumeText: s
   const annotations: ResumeAnnotation[] = [];
   
   // Create positive annotations for matched keywords
-  matched.slice(0, 5).forEach((keyword, index) => {
+  // Use varied annotation types to make it visually interesting
+  matched.slice(0, 6).forEach((keyword, index) => {
+    // Alternate between different annotation types for variety
+    const types: AnnotationType[] = ['circle', 'underline', 'highlight'];
+    const annotationType = types[index % types.length];
+    
     annotations.push({
       id: `pos-${index}`,
       text: keyword,
       sentiment: 'positive',
-      annotationType: index % 2 === 0 ? 'circle' : 'underline',
+      annotationType,
       boundingBox: {
         pageNumber: 1,
-        x: 50 + (index * 150),
-        y: 100 + (index * 80),
-        width: keyword.length * 8,
-        height: 20,
-      },
-      reason: `Great! This keyword matches the job description.`,
-    });
-  });
-
-  // Create negative annotations for missing keywords
-  missing.slice(0, 3).forEach((keyword, index) => {
-    annotations.push({
-      id: `neg-${index}`,
-      text: `Missing: ${keyword}`,
-      sentiment: 'negative',
-      annotationType: 'strikethrough',
-      boundingBox: {
-        pageNumber: 1,
-        x: 50 + (index * 180),
-        y: 300 + (index * 60),
+        // Provide placeholder coordinates - the text layer search will find actual positions
+        x: 100,
+        y: 100,
         width: keyword.length * 10,
-        height: 18,
+        height: 16,
       },
-      reason: `Add this skill if you have experience with ${keyword}.`,
+      reason: `Excellent! "${keyword}" matches the job requirements.`,
     });
   });
 
-  // Add some positive highlights for strong verbs
-  const strongVerbs = ['Developed', 'Implemented', 'Led', 'Managed'];
+  // Add positive highlights for strong action verbs found in resume
+  const strongVerbs = ['Developed', 'Implemented', 'Led', 'Managed', 'Created', 'Built', 'Designed', 'Achieved'];
+  let verbCount = 0;
   strongVerbs.forEach((verb, index) => {
-    if (resumeText.includes(verb)) {
+    // Check case-insensitive
+    const lowerResumeText = resumeText.toLowerCase();
+    if (lowerResumeText.includes(verb.toLowerCase()) && verbCount < 4) {
+      verbCount++;
       annotations.push({
         id: `verb-${index}`,
         text: verb,
         sentiment: 'positive',
-        annotationType: 'highlight',
+        annotationType: 'underline',
         boundingBox: {
           pageNumber: 1,
-          x: 100 + (index * 120),
-          y: 500 + (index * 50),
-          width: verb.length * 9,
-          height: 22,
+          x: 100,
+          y: 200,
+          width: verb.length * 10,
+          height: 16,
         },
-        reason: `Excellent action verb!`,
+        reason: `Strong action verb that demonstrates impact!`,
       });
     }
   });
